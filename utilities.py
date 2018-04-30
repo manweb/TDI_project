@@ -47,6 +47,9 @@ class CensusTractFinder(object):
         p = self.TractData[key]
     
         return p.exterior.coords.xy
+    
+    def GetCensusTracts(self):
+        return self.TractData.keys()
 
     def __getitem__(self,key):
         return self.TractData[key]
@@ -91,8 +94,9 @@ class AFFData(object):
     def GetPovertyForCensusTract(self, census_tract):
         try:
             row = self.data_poverty.loc[self.data_poverty['GEO.display-label'] == 'Census Tract %s, San Francisco County, California'%census_tract, 'HC03_EST_VC01'].as_matrix()[0]
+            return float(row)
         except:
             print('Problem with census tract %s'%census_tract)
             return 0
 
-        return float(row)
+        return 0
