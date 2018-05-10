@@ -9,6 +9,7 @@ CENSUS_TRACT_FNAME = 'Census_2010_Tracts_Clean.csv'
 SF_BOUNDARIES_FNAME = 'SF_boundaries2.txt'
 WEATHER_FNAME = 'Weather_Data_Clean.csv'
 POVERTY_FNAME = 'aff_download/ACS_16_5YR_S1701_with_ann.csv'
+POPULATION_FNAME = 'aff_download/ACS_16_5YR_S0101_with_ann.csv'
 
 class CensusTractFinder(object):
     def __init__(self):
@@ -90,6 +91,7 @@ class Weather(object):
 class AFFData(object):
     def __init__(self):
         self.data_poverty = pd.read_csv(POVERTY_FNAME, quotechar='"', skiprows=[1])[['GEO.display-label', 'HC03_EST_VC01']]
+        self.data_population = pd.read_csv(POPULATION_FNAME, quotechar='"', skiprows=[1])[['GEO.display-label', 'HC01_EST_VC01']]
 
     def GetPovertyForCensusTract(self, census_tract):
         try:
@@ -99,4 +101,14 @@ class AFFData(object):
             print('Problem with census tract %s'%census_tract)
             return 0
 
+        return 0
+
+    def GetPopulationForCensusTract(self, census_tract):
+        try:
+            row = self.data_population.loc[self.data_poverty['GEO.display-label'] == 'Census Tract %s, San Francisco County, California'%census_tract, 'HC01_EST_VC01'].as_matrix()[0]
+            return float(row)
+        except:
+            print('Problem with census tract %s'%census_tract)
+            return 0
+        
         return 0
