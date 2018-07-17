@@ -10,13 +10,14 @@ SF_BOUNDARIES_FNAME = 'SF_boundaries2.txt'
 WEATHER_FNAME = 'Weather_Data_Clean.csv'
 POVERTY_FNAME = 'aff_download/ACS_16_5YR_S1701_with_ann.csv'
 POPULATION_FNAME = 'aff_download/ACS_16_5YR_S0101_with_ann.csv'
+UNEMPLOYMENT_FNAME = 'aff_download/ACS_16_5YR_S2301_with_ann.csv'
 
 class CensusTractFinder(object):
     def __init__(self):
         self.TractData = {}
 
     def LoadData(self):
-        data = pd.read_csv(CENSUS_TRACT_FNAME, quotechar='"').as_matrix().astype(str)
+        data = pd.read_csv(CENSUS_TRACT_FNAME, quotechar='"').values.astype(str)
         
         self.TractData = {}
         for d in data:
@@ -57,7 +58,7 @@ class CensusTractFinder(object):
 
 class Geometry(object):
     def __init__(self):
-        self.data_sf_boundaries = pd.read_csv(SF_BOUNDARIES_FNAME).as_matrix()
+        self.data_sf_boundaries = pd.read_csv(SF_BOUNDARIES_FNAME).values
 
     def GetSFBoundaries(self):
         return self.data_sf_boundaries[:,0], self.data_sf_boundaries[:,1]
@@ -73,7 +74,7 @@ class Weather(object):
         df = pd.DataFrame(columns=['timestamp', 'date', 'time', 'temperature', 'pressure', 'precip', 'event'])
         dateformat = '%Y-%m-%d %H:%M:%S'
         timestamps = []
-        for d in self.data.as_matrix().astype(str):
+        for d in self.data.values.astype(str):
             timestamps.append(str(time.mktime(time.strptime('%s %s'%(d[0], d[1]), dateformat))))
 
         self.data['timestamp'] = pd.Series(timestamps, index=self.data.index)
@@ -84,18 +85,19 @@ class Weather(object):
         dateformat = '%Y-%m-%d %H:%M:%S'
         t = time.mktime(time.strptime(d, dateformat))
 
-        id = np.argsort(np.abs(self.data['timestamp'].as_matrix()-t))[0]
+        id = np.argsort(np.abs(self.data['timestamp'].values-t))[0]
 
-        return self.data.as_matrix()[id,2:6]
+        return self.data.values[id,2:6]
 
 class AFFData(object):
     def __init__(self):
         self.data_poverty = pd.read_csv(POVERTY_FNAME, quotechar='"', skiprows=[1])[['GEO.display-label', 'HC03_EST_VC01']]
         self.data_population = pd.read_csv(POPULATION_FNAME, quotechar='"', skiprows=[1])[['GEO.display-label', 'HC01_EST_VC01']]
+        self.data_unemployment = pd.read_csv(UNEMPLOYMENT_FNAME, quotechar='"', skiprows=[1])[['GEO.display-label', 'HC04_EST_VC01']]
 
     def GetPovertyForCensusTract(self, census_tract):
         try:
-            row = self.data_poverty.loc[self.data_poverty['GEO.display-label'] == 'Census Tract %s, San Francisco County, California'%census_tract, 'HC03_EST_VC01'].as_matrix()[0]
+            row = self.data_poverty.loc[self.data_poverty['GEO.display-label'] == 'Census Tract %s, San Francisco County, California'%census_tract, 'HC03_EST_VC01'].values[0]
             return float(row)
         except:
             print('Problem with census tract %s'%census_tract)
@@ -105,7 +107,17 @@ class AFFData(object):
 
     def GetPopulationForCensusTract(self, census_tract):
         try:
-            row = self.data_population.loc[self.data_poverty['GEO.display-label'] == 'Census Tract %s, San Francisco County, California'%census_tract, 'HC01_EST_VC01'].as_matrix()[0]
+            row = self.data_population.loc[self.data_poverty['GEO.display-label'] == 'Census Tract %s, San Francisco County, California'%census_tract, 'HC01_EST_VC01'].values[0]
+            return float(row)
+        except:
+            print('Problem with census tract %s'%census_tract)
+            return 0
+        
+        return 0
+
+    def GetUnemploymentForCensusTract(self, census_tract):
+        try:
+            row = self.data_unemployment.loc[self.data_unemployment['GEO.display-label'] == 'Census Tract %s, San Francisco County, California'%census_tract, 'HC04_EST_VC01'].values[0]
             return float(row)
         except:
             print('Problem with census tract %s'%census_tract)
